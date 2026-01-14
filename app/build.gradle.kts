@@ -48,6 +48,10 @@ android {
     buildFeatures {
         compose = true
     }
+
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
 }
 
 dependencies {
@@ -72,4 +76,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.navigation3.runtime)
     implementation(libs.navigation3.ui)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    androidTestImplementation(libs.androidx.room.testing)
 }

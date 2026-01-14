@@ -1,0 +1,53 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "35eac0be4c3650210b204154344b720e",
+    "entities": [
+      {
+        "tableName": "books",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`authorNames` TEXT, `coverEditionKey` TEXT, `openLibraryKey` TEXT NOT NULL, `title` TEXT NOT NULL, `uuid` TEXT NOT NULL, PRIMARY KEY(`uuid`))",
+        "fields": [
+          {
+            "fieldPath": "authorNames",
+            "columnName": "authorNames",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "coverEditionKey",
+            "columnName": "coverEditionKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "openLibraryKey",
+            "columnName": "openLibraryKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uuid",
+            "columnName": "uuid",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "uuid"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '35eac0be4c3650210b204154344b720e')"
+    ]
+  }
+}
