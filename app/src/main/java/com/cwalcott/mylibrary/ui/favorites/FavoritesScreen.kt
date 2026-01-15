@@ -12,26 +12,33 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cwalcott.mylibrary.R
+import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 
 @Composable
 fun FavoritesScreen(
     onAddBook: () -> Unit,
     onViewBook: (String) -> Unit,
-    viewModel: FavoritesViewModel = viewModel()
+    viewModel: FavoritesViewModel = viewModel(factory = FavoritesViewModel.Factory)
 ) {
-    FavoritesContent(onAddBook = onAddBook, onViewBook = onViewBook)
+    val books by viewModel.books.collectAsStateWithLifecycle()
+
+    books?.let { books ->
+        FavoritesContent(books = books, onAddBook = onAddBook, onViewBook = onViewBook)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesContent(onAddBook: () -> Unit, onViewBook: (String) -> Unit) {
+fun FavoritesContent(books: List<Book>, onAddBook: () -> Unit, onViewBook: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -55,7 +62,7 @@ fun FavoritesContent(onAddBook: () -> Unit, onViewBook: (String) -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Text("Favorites Placeholder")
+            Text("Books count: ${books.size}")
 
             Button(onClick = { onViewBook("1") }) {
                 Text("View Book 1")
@@ -72,6 +79,6 @@ fun FavoritesContent(onAddBook: () -> Unit, onViewBook: (String) -> Unit) {
 @Composable
 fun FavoritesScreenPreview() {
     MyLibraryTheme {
-        FavoritesContent(onAddBook = {}, onViewBook = {})
+        FavoritesContent(books = emptyList(), onAddBook = {}, onViewBook = {})
     }
 }

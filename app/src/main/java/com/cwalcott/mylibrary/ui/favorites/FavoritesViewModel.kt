@@ -1,11 +1,28 @@
 package com.cwalcott.mylibrary.ui.favorites
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cwalcott.mylibrary.MyLibraryApp
+import com.cwalcott.mylibrary.database.AppDatabase
+import com.cwalcott.mylibrary.model.Book
+import com.cwalcott.mylibrary.ui.util.WhileViewSubscribed
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 
-class FavoritesViewModel : ViewModel() {
-    private val _counter = MutableStateFlow(0)
-    val counter: StateFlow<Int> = _counter.asStateFlow()
+class FavoritesViewModel(database: AppDatabase) : ViewModel() {
+    val books: StateFlow<List<Book>?> = database.books().streamAll()
+        .stateIn(viewModelScope, WhileViewSubscribed, null)
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val database = (this[APPLICATION_KEY] as MyLibraryApp).database
+                FavoritesViewModel(database = database)
+            }
+        }
+    }
 }
