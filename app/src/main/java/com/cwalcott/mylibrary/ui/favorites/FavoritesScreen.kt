@@ -16,12 +16,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cwalcott.mylibrary.R
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 
+@Composable
+fun FavoritesScreen(
+    onAddBook: () -> Unit,
+    onViewBook: (String) -> Unit,
+    viewModel: FavoritesViewModel = viewModel()
+) {
+    FavoritesContent(onAddBook = onAddBook, onViewBook = onViewBook)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesScreen(onAddBook: () -> Unit, onViewBook: (String) -> Unit) {
+fun FavoritesContent(onAddBook: () -> Unit, onViewBook: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -62,6 +72,6 @@ fun FavoritesScreen(onAddBook: () -> Unit, onViewBook: (String) -> Unit) {
 @Composable
 fun FavoritesScreenPreview() {
     MyLibraryTheme {
-        FavoritesScreen(onAddBook = {}, onViewBook = {})
+        FavoritesContent(onAddBook = {}, onViewBook = {})
     }
 }
