@@ -1,17 +1,17 @@
 package com.cwalcott.mylibrary
 
 import android.app.Application
-import androidx.room.Room
-import com.cwalcott.mylibrary.database.AppDatabase
-import com.cwalcott.mylibrary.database.RoomAppDatabase
+import com.cwalcott.mylibrary.di.Composer
+import com.cwalcott.mylibrary.di.createLiveComposer
 
-class MyLibraryApp : Application() {
-    lateinit var database: AppDatabase
+open class MyLibraryApp : Application() {
+    lateinit var composer: Composer
 
     override fun onCreate() {
         super.onCreate()
 
-        database =
-            Room.databaseBuilder(applicationContext, RoomAppDatabase::class.java, "app.db").build()
+        composer = createComposer()
     }
+
+    open fun createComposer(): Composer = createLiveComposer(this)
 }

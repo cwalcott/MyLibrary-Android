@@ -20,8 +20,7 @@ class FavoritesViewModel(database: AppDatabase) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val database = (this[APPLICATION_KEY] as MyLibraryApp).database
-                FavoritesViewModel(database = database)
+                (this[APPLICATION_KEY] as MyLibraryApp).composer.makeFavoritesViewModel()
             }
         }
     }
