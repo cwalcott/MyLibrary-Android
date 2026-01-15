@@ -6,8 +6,8 @@ import java.util.UUID
 
 @Entity(tableName = "books")
 data class Book(
-    val authorNames: String?,
-    val coverEditionKey: String?,
+    val authorNames: String? = null,
+    val coverEditionKey: String? = null,
     val openLibraryKey: String,
     val title: String,
     @PrimaryKey val uuid: String = UUID.randomUUID().toString().uppercase()

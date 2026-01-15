@@ -7,4 +7,8 @@ import com.cwalcott.mylibrary.model.Book
 @Database(entities = [Book::class], version = 1)
 abstract class RoomAppDatabase : RoomDatabase(), AppDatabase {
     abstract override fun books(): BookDao
+
+    override fun reset() {
+        clearAllTables()
+    }
 }

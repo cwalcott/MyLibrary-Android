@@ -1,11 +1,15 @@
 package com.cwalcott.mylibrary.ui.favorites
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -13,14 +17,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cwalcott.mylibrary.R
 import com.cwalcott.mylibrary.model.Book
+import com.cwalcott.mylibrary.model.Fixtures
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 
 @Composable
@@ -55,30 +61,36 @@ fun FavoritesContent(books: List<Book>, onAddBook: () -> Unit, onViewBook: (Stri
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Text("Books count: ${books.size}")
+            items(items = books, key = { it.uuid }) { book ->
+                Column(
+                    modifier = Modifier
+                        .clickable { onViewBook(book.uuid) }
+                        .background(color = Color.White)
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    Text(book.title)
 
-            Button(onClick = { onViewBook("1") }) {
-                Text("View Book 1")
-            }
+                    if (book.authorNames != null) {
+                        Text(book.authorNames)
+                    }
+                }
 
-            Button(onClick = { onViewBook("2") }) {
-                Text("View Book 2")
+                HorizontalDivider()
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 fun FavoritesScreenPreview() {
     MyLibraryTheme {
-        FavoritesContent(books = emptyList(), onAddBook = {}, onViewBook = {})
+        FavoritesContent(books = listOf(Fixtures.book()), onAddBook = {}, onViewBook = {})
     }
 }
