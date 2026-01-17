@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         entry<NavRoute.SearchBooks> {
-                            SearchBooksScreen(onBack = onBack)
+                            SearchBooksScreen(onBack = onBack, onViewBook = { /* TODO */ })
                         }
                     }
                 )

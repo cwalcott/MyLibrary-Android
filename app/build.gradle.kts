@@ -89,6 +89,7 @@ dependencies {
     // Retrofit
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.okhttp.logging.interceptor)
     testImplementation(libs.retrofit.mock)
     androidTestImplementation(libs.retrofit.mock)
 

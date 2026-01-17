@@ -6,4 +6,10 @@ object Fixtures {
         openLibraryKey = "/works/OL27482W",
         title = "The Hobbit"
     )
+
+    fun book2(): Book = Book(
+        authorNames = "Frank Herbert",
+        openLibraryKey = "/works/OL893415W",
+        title = "Dune"
+    )
 }

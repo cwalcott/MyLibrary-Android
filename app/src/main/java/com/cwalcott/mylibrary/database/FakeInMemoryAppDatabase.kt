@@ -3,6 +3,7 @@ package com.cwalcott.mylibrary.database
 import com.cwalcott.mylibrary.model.Book
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.collections.plus
 
 class FakeInMemoryAppDatabase : AppDatabase {
     private val books = MutableStateFlow<List<Book>>(emptyList())

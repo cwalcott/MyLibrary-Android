@@ -1,24 +1,10 @@
 package com.cwalcott.mylibrary.networking
 
+import com.cwalcott.mylibrary.model.Book
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
 import retrofit2.http.Query
-
-/* Example usage:
-        val retroJson = Json { ignoreUnknownKeys = true }
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://openlibrary.org/")
-            .addConverterFactory(
-                retroJson
-                    .asConverterFactory("application/json; charset=utf-8".toMediaType())
-            )
-            .build()
-
-        val client = retrofit.create(OpenLibraryApiClient::class.java)
-
-        client.search("Hobbit")
- */
 
 @Serializable
 data class SearchResponse(val docs: List<OpenLibraryBook>)
@@ -29,7 +15,14 @@ data class OpenLibraryBook(
     @SerialName("cover_edition_key") val coverEditionKey: String? = null,
     val key: String,
     val title: String
-)
+) {
+    fun asBook(): Book = Book(
+        authorNames = authorName.orEmpty().joinToString(", "),
+        coverEditionKey = coverEditionKey,
+        openLibraryKey = key,
+        title = title
+    )
+}
 
 interface OpenLibraryApiClient {
     suspend fun getBook(key: String): OpenLibraryBook? =

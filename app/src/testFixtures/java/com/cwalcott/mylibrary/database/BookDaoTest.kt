@@ -1,6 +1,5 @@
 package com.cwalcott.mylibrary.database
 
-import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.model.Fixtures
 import com.cwalcott.mylibrary.util.test
 import com.google.common.truth.Truth.assertThat
@@ -31,11 +30,7 @@ abstract class BookDaoTest {
     }
 
     @Test fun streamAll() = runTest {
-        val book2 = Book(
-            authorNames = "Frank Herbert",
-            openLibraryKey = "/works/OL893415W",
-            title = "Dune"
-        )
+        val book2 = Fixtures.book2()
 
         bookDao.streamAll().test {
             assertThat(last()).isEmpty()
