@@ -51,7 +51,6 @@ fun SearchBooksScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchBooksContent(
     books: List<Book>,
@@ -59,6 +58,7 @@ private fun SearchBooksContent(
     onViewBook: (String) -> Unit,
     onUpdateSearchQuery: (String) -> Unit
 ) {
+    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         val searchBarState = rememberSearchBarState(initialValue = SearchBarValue.Expanded)
 

@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.cwalcott.mylibrary.database.AppDatabase
 import com.cwalcott.mylibrary.database.RoomAppDatabase
 import com.cwalcott.mylibrary.networking.OpenLibraryApiClient
+import com.cwalcott.mylibrary.ui.bookdetails.BookDetailsViewModel
 import com.cwalcott.mylibrary.ui.favorites.FavoritesViewModel
 import com.cwalcott.mylibrary.ui.searchbooks.SearchBooksViewModel
 import kotlinx.serialization.json.Json
@@ -15,7 +16,10 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class Composer(val database: AppDatabase, val openLibraryApiClient: OpenLibraryApiClient) {
-    fun makeFavoritesViewModel(): FavoritesViewModel = FavoritesViewModel(database = database)
+    fun makeBookDetailsViewModel(openLibraryKey: String): BookDetailsViewModel =
+        BookDetailsViewModel(database, openLibraryApiClient, openLibraryKey)
+
+    fun makeFavoritesViewModel(): FavoritesViewModel = FavoritesViewModel(database)
 
     fun makeSearchBooksViewModel(): SearchBooksViewModel =
         SearchBooksViewModel(openLibraryApiClient)

@@ -65,7 +65,7 @@ class FavoritesScreenTest {
             assertThat(viewBookClicked).isNull()
 
             onNodeWithText("Test Book 2").performClick()
-            assertThat(viewBookClicked).isEqualTo(book2.uuid)
+            assertThat(viewBookClicked).isEqualTo(book2.openLibraryKey)
         }
     }
 

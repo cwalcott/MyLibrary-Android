@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 
 sealed interface NavRoute : NavKey {
     @Serializable
-    data class BookDetails(val bookId: String) : NavRoute
+    data class BookDetails(val openLibraryKey: String) : NavRoute
 
     @Serializable
     data object Favorites : NavRoute
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     onBack = onBack,
                     entryProvider = entryProvider {
                         entry<NavRoute.BookDetails> { key ->
-                            BookDetailsScreen(bookId = key.bookId, onBack = onBack)
+                            BookDetailsScreen(openLibraryKey = key.openLibraryKey, onBack = onBack)
                         }
 
                         entry<NavRoute.Favorites> {
@@ -53,7 +53,10 @@ class MainActivity : ComponentActivity() {
                         }
 
                         entry<NavRoute.SearchBooks> {
-                            SearchBooksScreen(onBack = onBack, onViewBook = { /* TODO */ })
+                            SearchBooksScreen(
+                                onBack = onBack,
+                                onViewBook = { backStack.add(NavRoute.BookDetails(it)) }
+                            )
                         }
                     }
                 )

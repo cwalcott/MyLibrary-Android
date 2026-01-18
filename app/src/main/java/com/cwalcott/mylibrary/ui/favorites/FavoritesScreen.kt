@@ -40,7 +40,6 @@ fun FavoritesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FavoritesContent(
     books: List<Book>,
@@ -49,6 +48,7 @@ private fun FavoritesContent(
 ) {
     Scaffold(
         topBar = {
+            @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
                 title = { Text("Favorite Books") },
                 actions = {
@@ -79,7 +79,7 @@ private fun FavoritesContent(
                         }
                     },
                     colors = ListItemDefaults.colors(containerColor = Color.White),
-                    modifier = Modifier.clickable { onViewBook(book.uuid) }
+                    modifier = Modifier.clickable { onViewBook(book.openLibraryKey) }
                 )
 
                 HorizontalDivider()
