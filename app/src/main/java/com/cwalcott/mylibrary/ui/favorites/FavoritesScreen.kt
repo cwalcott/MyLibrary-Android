@@ -36,12 +36,12 @@ fun FavoritesScreen(
     val books by viewModel.books.collectAsStateWithLifecycle()
 
     books?.let { books ->
-        FavoritesContent(books = books, onAddBook = onAddBook, onViewBook = onViewBook)
+        FavoritesScreen(books = books, onAddBook = onAddBook, onViewBook = onViewBook)
     }
 }
 
 @Composable
-private fun FavoritesContent(
+private fun FavoritesScreen(
     books: List<Book>,
     onAddBook: () -> Unit,
     onViewBook: (String) -> Unit
@@ -92,6 +92,6 @@ private fun FavoritesContent(
 @Composable
 fun FavoritesScreenPreview() {
     MyLibraryTheme {
-        FavoritesContent(books = listOf(Fixtures.book()), onAddBook = {}, onViewBook = {})
+        FavoritesScreen(books = listOf(Fixtures.book()), onAddBook = {}, onViewBook = {})
     }
 }

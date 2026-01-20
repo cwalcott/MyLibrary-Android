@@ -43,7 +43,7 @@ fun SearchBooksScreen(
 ) {
     val books by viewModel.books.collectAsStateWithLifecycle()
 
-    SearchBooksContent(
+    SearchBooksScreen(
         books = books,
         onBack = onBack,
         onViewBook = onViewBook,
@@ -52,7 +52,7 @@ fun SearchBooksScreen(
 }
 
 @Composable
-private fun SearchBooksContent(
+private fun SearchBooksScreen(
     books: List<Book>,
     onBack: () -> Unit,
     onViewBook: (String) -> Unit,
@@ -127,7 +127,7 @@ private fun SearchResults(
 @Composable
 fun SearchBooksScreenPreview() {
     MyLibraryTheme {
-        SearchBooksContent(
+        SearchBooksScreen(
             books = listOf(Fixtures.book(), Fixtures.book2()),
             onBack = {},
             onViewBook = {},

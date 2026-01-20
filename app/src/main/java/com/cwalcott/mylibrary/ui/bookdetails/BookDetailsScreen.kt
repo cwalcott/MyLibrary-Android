@@ -41,7 +41,7 @@ fun BookDetailsScreen(
     val favoritesState by viewModel.favoritesState.collectAsStateWithLifecycle()
 
     book?.let { book ->
-        BookDetailsContent(
+        BookDetailsScreen(
             book = book,
             favoritesState = favoritesState,
             onBack = onBack,
@@ -52,7 +52,7 @@ fun BookDetailsScreen(
 }
 
 @Composable
-private fun BookDetailsContent(
+private fun BookDetailsScreen(
     book: Book,
     favoritesState: BookDetailsViewModel.FavoritesState,
     onBack: () -> Unit,
@@ -126,7 +126,7 @@ private fun BookDetailsContent(
 @Composable
 fun BookDetailsScreenPreview() {
     MyLibraryTheme {
-        BookDetailsContent(
+        BookDetailsScreen(
             book = Fixtures.book(),
             favoritesState = BookDetailsViewModel.FavoritesState.FAVORITE,
             onBack = {},
