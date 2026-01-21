@@ -9,7 +9,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.cwalcott.mylibrary.networking.FakeOpenLibraryApiClient
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
+import com.cwalcott.mylibrary.util.getApplicationComposer
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -19,6 +21,9 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SearchBooksScreenTest {
     @get:Rule val composeTestRule = createComposeRule()
+
+    private val openLibraryApiClient =
+        getApplicationComposer().openLibraryApiClient as FakeOpenLibraryApiClient
 
     @Test fun searchesBooks() {
         with(composeTestRule) {
@@ -32,6 +37,25 @@ class SearchBooksScreenTest {
             waitUntilAtLeastOneExists(hasText("Foundation"))
 
             onNodeWithText("Foundation").assertExists()
+        }
+    }
+
+    @Test fun handlesNetworkErrors() {
+        openLibraryApiClient.networkError = true
+
+        with(composeTestRule) {
+            setContent {
+                MyLibraryTheme {
+                    SearchBooksScreen(onBack = {}, onViewBook = {})
+                }
+            }
+
+            onAllNodesWithContentDescription("Search").onFirst().performTextInput("Asimov")
+            waitUntilAtLeastOneExists(hasText("Retry"))
+
+            openLibraryApiClient.networkError = false
+            onNodeWithText("Retry").performClick()
+            waitUntilAtLeastOneExists(hasText("Foundation"))
         }
     }
 

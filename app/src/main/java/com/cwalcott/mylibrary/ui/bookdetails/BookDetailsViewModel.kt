@@ -29,21 +29,43 @@ class BookDetailsViewModel(
     val book: StateFlow<Book?>
         get() = _book.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?>
+        get() = _errorMessage.asStateFlow()
+
     private val _favoritesState = MutableStateFlow<FavoritesState>(FavoritesState.HIDDEN)
     val favoritesState: StateFlow<FavoritesState>
         get() = _favoritesState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            val localBook = database.books().findByOpenLibraryKey(openLibraryKey)
+            val localBook = try {
+                database.books().findByOpenLibraryKey(openLibraryKey)
+            } catch (_: Exception) {
+                null
+            }
+
             if (localBook != null) {
                 _book.value = localBook
                 _favoritesState.value = FavoritesState.FAVORITE
                 return@launch
             }
 
-            _book.value = openLibraryApiClient.getBook(openLibraryKey)?.asBook()
-            _favoritesState.value = FavoritesState.NOT_FAVORITE
+            try {
+                val book = openLibraryApiClient.getBook(openLibraryKey)?.asBook()
+                if (book != null) {
+                    _book.value = book
+                    _favoritesState.value = FavoritesState.NOT_FAVORITE
+                } else {
+                    _book.value = null
+                    _favoritesState.value = FavoritesState.HIDDEN
+                    _errorMessage.value = "Book not found"
+                }
+            } catch (_: Exception) {
+                _book.value = null
+                _favoritesState.value = FavoritesState.HIDDEN
+                _errorMessage.value = "Unable to load book. Check your connection."
+            }
         }
     }
 
@@ -54,9 +76,17 @@ class BookDetailsViewModel(
                 return@launch
             }
 
-            database.books().insert(book)
-            _favoritesState.value = FavoritesState.FAVORITE
+            try {
+                database.books().insert(book)
+                _favoritesState.value = FavoritesState.FAVORITE
+            } catch (_: Exception) {
+                _errorMessage.value = "Failed to add to favorites"
+            }
         }
+    }
+
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 
     fun removeFromFavorites() {
@@ -65,8 +95,12 @@ class BookDetailsViewModel(
                 return@launch
             }
 
-            database.books().deleteByOpenLibraryKey(openLibraryKey)
-            _favoritesState.value = FavoritesState.NOT_FAVORITE
+            try {
+                database.books().deleteByOpenLibraryKey(openLibraryKey)
+                _favoritesState.value = FavoritesState.NOT_FAVORITE
+            } catch (_: Exception) {
+                _errorMessage.value = "Failed to remove from favorites"
+            }
         }
     }
 

@@ -1,18 +1,29 @@
 package com.cwalcott.mylibrary.networking
 
+import okio.IOException
+
 class FakeOpenLibraryApiClient(private val books: List<OpenLibraryBook> = mockBooks) :
     OpenLibraryApiClient {
-    override suspend fun performSearch(query: String): SearchResponse = SearchResponse(
-        docs = books.filter {
-            if (query.startsWith("key:")) {
-                it.key == query.removePrefix("key:")
-            } else {
-                it.title.contains(query) || it.authorName.orEmpty().any { author ->
-                    author.contains(query)
+    var networkError = false
+
+    override suspend fun performSearch(query: String): SearchResponse {
+        if (networkError) {
+            throw IOException("Network Error")
+        }
+
+        return SearchResponse(
+            docs = books.filter {
+                if (query.startsWith("key:")) {
+                    it.key == query.removePrefix("key:")
+                } else {
+                    it.title.contains(query, ignoreCase = true) ||
+                        it.authorName.orEmpty().any { author ->
+                            author.contains(query, ignoreCase = true)
+                        }
                 }
             }
-        }
-    )
+        )
+    }
 }
 
 val mockBooks = listOf(

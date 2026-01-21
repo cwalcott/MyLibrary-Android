@@ -40,6 +40,20 @@ class BookDetailsViewModelTest {
             .isEqualTo(BookDetailsViewModel.FavoritesState.FAVORITE)
     }
 
+    @Test fun initialState_networkError() = runTest {
+        val openLibraryKey = mockBooks.last().key
+        openLibraryApiClient.networkError = true
+        val viewModel = createViewModel(openLibraryKey)
+
+        assertThat(viewModel.book.value).isNull()
+        assertThat(viewModel.favoritesState.value)
+            .isEqualTo(BookDetailsViewModel.FavoritesState.HIDDEN)
+        assertThat(viewModel.errorMessage.value).isNotNull()
+
+        viewModel.clearErrorMessage()
+        assertThat(viewModel.errorMessage.value).isNull()
+    }
+
     @Test fun addToFavorites() = runTest {
         val openLibraryKey = mockBooks.last().key
         val viewModel = createViewModel(openLibraryKey)
@@ -55,6 +69,22 @@ class BookDetailsViewModelTest {
         }
     }
 
+    @Test fun addToFavorites_error() = runTest {
+        val openLibraryKey = mockBooks.last().key
+        val viewModel = createViewModel(openLibraryKey)
+        database.databaseError = true
+
+        viewModel.errorMessage.test {
+            assertThat(last()).isNull()
+
+            viewModel.addToFavorites()
+
+            assertThat(last()).isNotNull()
+            assertThat(viewModel.favoritesState.value)
+                .isEqualTo(BookDetailsViewModel.FavoritesState.NOT_FAVORITE)
+        }
+    }
+
     @Test fun removeFromFavorites() = runTest {
         val viewModel = createViewModel(book.openLibraryKey)
 
@@ -66,6 +96,21 @@ class BookDetailsViewModelTest {
 
             assertThat(last()).isEqualTo(BookDetailsViewModel.FavoritesState.NOT_FAVORITE)
             assertThat(database.books().findByOpenLibraryKey(book.openLibraryKey)).isNull()
+        }
+    }
+
+    @Test fun removeFromFavorites_error() = runTest {
+        val viewModel = createViewModel(book.openLibraryKey)
+        database.databaseError = true
+
+        viewModel.errorMessage.test {
+            assertThat(last()).isNull()
+
+            viewModel.removeFromFavorites()
+
+            assertThat(last()).isNotNull()
+            assertThat(viewModel.favoritesState.value)
+                .isEqualTo(BookDetailsViewModel.FavoritesState.FAVORITE)
         }
     }
 

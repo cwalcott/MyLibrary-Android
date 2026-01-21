@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cwalcott.mylibrary.model.Fixtures
+import com.cwalcott.mylibrary.networking.FakeOpenLibraryApiClient
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 import com.cwalcott.mylibrary.util.getApplicationComposer
 import com.google.common.truth.Truth.assertThat
@@ -25,6 +26,8 @@ class BookDetailsScreenTest {
     private val book2 = Fixtures.book2()
 
     private val database = getApplicationComposer().database
+    private val openLibraryApiClient =
+        getApplicationComposer().openLibraryApiClient as FakeOpenLibraryApiClient
 
     @Before fun setUp() = runTest {
         database.books().insert(book)
@@ -32,6 +35,7 @@ class BookDetailsScreenTest {
 
     @After fun tearDown() = runTest {
         database.reset()
+        openLibraryApiClient.networkError = false
     }
 
     @Test fun rendersBookDetails() {
@@ -40,6 +44,17 @@ class BookDetailsScreenTest {
 
             onNodeWithText(book.title).assertIsDisplayed()
             onNodeWithText(book.authorNames.orEmpty()).assertIsDisplayed()
+        }
+    }
+
+    @Test fun handlesNetworkErrors() {
+        openLibraryApiClient.networkError = true
+
+        with(composeTestRule) {
+            setContent(book2.openLibraryKey)
+
+            onNodeWithText(book.title).assertDoesNotExist()
+            onNodeWithText("Error").assertIsDisplayed()
         }
     }
 

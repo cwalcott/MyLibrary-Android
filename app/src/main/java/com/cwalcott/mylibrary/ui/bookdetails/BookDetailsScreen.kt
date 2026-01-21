@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -12,6 +13,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,25 +40,28 @@ fun BookDetailsScreen(
     )
 ) {
     val book by viewModel.book.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val favoritesState by viewModel.favoritesState.collectAsStateWithLifecycle()
 
-    book?.let { book ->
-        BookDetailsScreen(
-            book = book,
-            favoritesState = favoritesState,
-            onBack = onBack,
-            onAddToFavorites = viewModel::addToFavorites,
-            onRemoveFromFavorites = viewModel::removeFromFavorites
-        )
-    }
+    BookDetailsScreen(
+        book = book,
+        errorMessage = errorMessage,
+        favoritesState = favoritesState,
+        onBack = onBack,
+        onAddToFavorites = viewModel::addToFavorites,
+        onErrorAcknowledged = viewModel::clearErrorMessage,
+        onRemoveFromFavorites = viewModel::removeFromFavorites
+    )
 }
 
 @Composable
 private fun BookDetailsScreen(
-    book: Book,
+    book: Book?,
+    errorMessage: String?,
     favoritesState: BookDetailsViewModel.FavoritesState,
     onBack: () -> Unit,
     onAddToFavorites: () -> Unit,
+    onErrorAcknowledged: () -> Unit,
     onRemoveFromFavorites: () -> Unit
 ) {
     Scaffold(
@@ -76,44 +81,61 @@ private fun BookDetailsScreen(
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = book.title,
-                    style = MaterialTheme.typography.headlineLarge
-                )
-
-                if (book.authorNames != null) {
-                    Text(
-                        text = book.authorNames,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontStyle = FontStyle.Italic
-                    )
+        if (errorMessage != null) {
+            AlertDialog(
+                title = { Text(text = "Error") },
+                text = { Text(text = errorMessage) },
+                onDismissRequest = onErrorAcknowledged,
+                confirmButton = {
+                    TextButton(onClick = onErrorAcknowledged) {
+                        Text("OK")
+                    }
                 }
-            }
+            )
+        }
 
-            if (favoritesState != BookDetailsViewModel.FavoritesState.HIDDEN) {
-                Box(
-                    contentAlignment = Alignment.BottomCenter,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
+        if (book != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    if (favoritesState == BookDetailsViewModel.FavoritesState.FAVORITE) {
-                        Button(onClick = onRemoveFromFavorites) {
-                            Text(text = "Remove from Favorites")
-                        }
-                    } else if (favoritesState == BookDetailsViewModel.FavoritesState.NOT_FAVORITE) {
-                        Button(onClick = onAddToFavorites) {
-                            Text(text = "Add to Favorites")
+                    Text(
+                        text = book.title,
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+
+                    if (book.authorNames != null) {
+                        Text(
+                            text = book.authorNames,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                }
+
+                if (favoritesState != BookDetailsViewModel.FavoritesState.HIDDEN) {
+                    Box(
+                        contentAlignment = Alignment.BottomCenter,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+                    ) {
+                        if (favoritesState == BookDetailsViewModel.FavoritesState.FAVORITE) {
+                            Button(onClick = onRemoveFromFavorites) {
+                                Text(text = "Remove from Favorites")
+                            }
+                        } else if (favoritesState ==
+                            BookDetailsViewModel.FavoritesState.NOT_FAVORITE
+                        ) {
+                            Button(onClick = onAddToFavorites) {
+                                Text(text = "Add to Favorites")
+                            }
                         }
                     }
                 }
@@ -128,9 +150,27 @@ fun BookDetailsScreenPreview() {
     MyLibraryTheme {
         BookDetailsScreen(
             book = Fixtures.book(),
+            errorMessage = null,
             favoritesState = BookDetailsViewModel.FavoritesState.FAVORITE,
             onBack = {},
             onAddToFavorites = {},
+            onErrorAcknowledged = {},
+            onRemoveFromFavorites = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BookDetailsScreenErrorMessagePreview() {
+    MyLibraryTheme {
+        BookDetailsScreen(
+            book = Fixtures.book(),
+            errorMessage = "Error while loading book",
+            favoritesState = BookDetailsViewModel.FavoritesState.FAVORITE,
+            onBack = {},
+            onAddToFavorites = {},
+            onErrorAcknowledged = {},
             onRemoveFromFavorites = {}
         )
     }

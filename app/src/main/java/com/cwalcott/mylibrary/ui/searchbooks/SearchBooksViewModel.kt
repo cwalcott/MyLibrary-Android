@@ -22,6 +22,10 @@ class SearchBooksViewModel(private val openLibraryApiClient: OpenLibraryApiClien
     val books: StateFlow<List<Book>>
         get() = _books.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?>
+        get() = _errorMessage.asStateFlow()
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String>
         get() = _searchQuery.asStateFlow()
@@ -30,7 +34,14 @@ class SearchBooksViewModel(private val openLibraryApiClient: OpenLibraryApiClien
         viewModelScope.launch {
             searchQuery
                 .debounce(500.milliseconds)
-                .collectLatest { _books.value = searchBooks(it) }
+                .collectLatest { _books.value = performSearch(it) }
+        }
+    }
+
+    fun retrySearch() {
+        _errorMessage.value = null
+        viewModelScope.launch {
+            _books.value = performSearch(searchQuery.value)
         }
     }
 
@@ -38,12 +49,17 @@ class SearchBooksViewModel(private val openLibraryApiClient: OpenLibraryApiClien
         _searchQuery.value = searchQuery
     }
 
-    private suspend fun searchBooks(query: String): List<Book> {
+    private suspend fun performSearch(query: String): List<Book> {
         if (query.length < 3) {
             return emptyList()
         }
 
-        return openLibraryApiClient.search(query).map { it.asBook() }
+        return try {
+            openLibraryApiClient.search(query).map { it.asBook() }
+        } catch (_: Exception) {
+            _errorMessage.value = "Unable to search. Check your connection."
+            emptyList()
+        }
     }
 
     companion object {

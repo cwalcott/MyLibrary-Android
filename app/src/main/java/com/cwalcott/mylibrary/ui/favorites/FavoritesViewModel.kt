@@ -11,10 +11,14 @@ import com.cwalcott.mylibrary.database.AppDatabase
 import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.ui.util.WhileViewSubscribed
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class FavoritesViewModel(database: AppDatabase) : ViewModel() {
     val books: StateFlow<List<Book>?> = database.books().streamAll()
+        .map { it as List<Book>? }
+        .catch { emit(null) }
         .stateIn(viewModelScope, WhileViewSubscribed, null)
 
     companion object {

@@ -30,6 +30,27 @@ class SearchBooksViewModelTest {
         }
     }
 
+    @Test fun searchBooks_error() = runTest {
+        val viewModel = createViewModel()
+        openLibraryApiClient.networkError = true
+
+        viewModel.errorMessage.test {
+            assertThat(last()).isNull()
+            viewModel.updateSearchQuery("Tolkien")
+            advanceTimeBy(1.seconds)
+
+            assertThat(last()).isNotNull()
+            assertThat(viewModel.books.value).isEmpty()
+
+            openLibraryApiClient.networkError = false
+            viewModel.retrySearch()
+            advanceTimeBy(1.seconds)
+
+            assertThat(last()).isNull()
+            assertThat(viewModel.books.value).isNotEmpty()
+        }
+    }
+
     @Test fun searchBooks_debouncesQuery() = runTest {
         val viewModel = createViewModel()
         viewModel.books.test {
