@@ -2,7 +2,6 @@ package com.cwalcott.mylibrary.ui.searchbooks
 
 import com.cwalcott.mylibrary.networking.FakeOpenLibraryApiClient
 import com.cwalcott.mylibrary.util.MainDispatcherRule
-import com.cwalcott.mylibrary.util.test
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -17,54 +16,56 @@ class SearchBooksViewModelTest {
     private val openLibraryApiClient = FakeOpenLibraryApiClient()
 
     @Test fun initialState() {
-        assertThat(createViewModel().books.value).isEmpty()
+        assertThat(createViewModel().uiState.value).isEqualTo(
+            SearchBookUiState(books = emptyList(), errorMessage = null, searchQuery = "")
+        )
     }
 
     @Test fun searchBooks() = runTest {
         val viewModel = createViewModel()
-        viewModel.books.test {
-            viewModel.updateSearchQuery("Tolkien")
 
-            advanceTimeBy(1.seconds)
-            assertThat(last().all { it.authorNames?.contains("Tolkien") == true })
-        }
+        viewModel.updateSearchQuery("Tolkien")
+        advanceTimeBy(1.seconds)
+
+        assertThat(
+            viewModel.uiState.value.books.all { it.authorNames?.contains("Tolkien") == true }
+        )
     }
 
     @Test fun searchBooks_error() = runTest {
         val viewModel = createViewModel()
         openLibraryApiClient.networkError = true
 
-        viewModel.errorMessage.test {
-            assertThat(last()).isNull()
-            viewModel.updateSearchQuery("Tolkien")
-            advanceTimeBy(1.seconds)
+        assertThat(viewModel.uiState.value.errorMessage).isNull()
+        viewModel.updateSearchQuery("Tolkien")
+        advanceTimeBy(1.seconds)
 
-            assertThat(last()).isNotNull()
-            assertThat(viewModel.books.value).isEmpty()
+        var state = viewModel.uiState.value
+        assertThat(state.errorMessage).isNotNull()
+        assertThat(state.books).isEmpty()
 
-            openLibraryApiClient.networkError = false
-            viewModel.retrySearch()
-            advanceTimeBy(1.seconds)
+        openLibraryApiClient.networkError = false
+        viewModel.retrySearch()
+        advanceTimeBy(1.seconds)
 
-            assertThat(last()).isNull()
-            assertThat(viewModel.books.value).isNotEmpty()
-        }
+        state = viewModel.uiState.value
+        assertThat(state.errorMessage).isNull()
+        assertThat(state.books).isNotEmpty()
     }
 
     @Test fun searchBooks_debouncesQuery() = runTest {
         val viewModel = createViewModel()
-        viewModel.books.test {
-            assertThat(last()).isEmpty()
 
-            viewModel.updateSearchQuery("Asimov")
-            assertThat(last()).isEmpty()
+        assertThat(viewModel.uiState.value.books).isEmpty()
 
-            advanceTimeBy(250.milliseconds)
-            assertThat(last()).isEmpty()
+        viewModel.updateSearchQuery("Asimov")
+        assertThat(viewModel.uiState.value.books).isEmpty()
 
-            advanceTimeBy(500.milliseconds)
-            assertThat(last()).hasSize(1)
-        }
+        advanceTimeBy(250.milliseconds)
+        assertThat(viewModel.uiState.value.books).isEmpty()
+
+        advanceTimeBy(500.milliseconds)
+        assertThat(viewModel.uiState.value.books).hasSize(1)
     }
 
     private fun createViewModel() = SearchBooksViewModel(openLibraryApiClient)

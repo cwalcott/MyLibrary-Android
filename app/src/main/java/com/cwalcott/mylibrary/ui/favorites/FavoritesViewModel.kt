@@ -9,7 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cwalcott.mylibrary.MyLibraryApp
 import com.cwalcott.mylibrary.database.AppDatabase
 import com.cwalcott.mylibrary.model.Book
-import com.cwalcott.mylibrary.ui.util.WhileViewSubscribed
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -19,7 +19,7 @@ class FavoritesViewModel(database: AppDatabase) : ViewModel() {
     val books: StateFlow<List<Book>?> = database.books().streamAll()
         .map { it as List<Book>? }
         .catch { emit(null) }
-        .stateIn(viewModelScope, WhileViewSubscribed, null)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), null)
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

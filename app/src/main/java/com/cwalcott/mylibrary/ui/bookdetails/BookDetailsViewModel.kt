@@ -12,30 +12,34 @@ import com.cwalcott.mylibrary.networking.OpenLibraryApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+data class BookDetailsUiState(
+    val book: Book?,
+    val errorMessage: String? = null,
+    val favoritesState: FavoritesState
+) {
+    enum class FavoritesState {
+        FAVORITE,
+        NOT_FAVORITE,
+        HIDDEN
+    }
+}
 
 class BookDetailsViewModel(
     private val database: AppDatabase,
     private val openLibraryApiClient: OpenLibraryApiClient,
     private val openLibraryKey: String
 ) : ViewModel() {
-    enum class FavoritesState {
-        FAVORITE,
-        NOT_FAVORITE,
-        HIDDEN
-    }
-
-    private val _book = MutableStateFlow<Book?>(null)
-    val book: StateFlow<Book?>
-        get() = _book.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?>
-        get() = _errorMessage.asStateFlow()
-
-    private val _favoritesState = MutableStateFlow<FavoritesState>(FavoritesState.HIDDEN)
-    val favoritesState: StateFlow<FavoritesState>
-        get() = _favoritesState.asStateFlow()
+    private val _uiState = MutableStateFlow(
+        BookDetailsUiState(
+            book = null,
+            errorMessage = null,
+            favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
+        )
+    )
+    val uiState: StateFlow<BookDetailsUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -46,60 +50,77 @@ class BookDetailsViewModel(
             }
 
             if (localBook != null) {
-                _book.value = localBook
-                _favoritesState.value = FavoritesState.FAVORITE
+                _uiState.value = BookDetailsUiState(
+                    book = localBook,
+                    favoritesState = BookDetailsUiState.FavoritesState.FAVORITE
+                )
                 return@launch
             }
 
             try {
                 val book = openLibraryApiClient.getBook(openLibraryKey)?.asBook()
                 if (book != null) {
-                    _book.value = book
-                    _favoritesState.value = FavoritesState.NOT_FAVORITE
+                    _uiState.value = BookDetailsUiState(
+                        book = book,
+                        favoritesState = BookDetailsUiState.FavoritesState.NOT_FAVORITE
+                    )
                 } else {
-                    _book.value = null
-                    _favoritesState.value = FavoritesState.HIDDEN
-                    _errorMessage.value = "Book not found"
+                    _uiState.value = BookDetailsUiState(
+                        book = null,
+                        errorMessage = "Book not found",
+                        favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
+                    )
                 }
             } catch (_: Exception) {
-                _book.value = null
-                _favoritesState.value = FavoritesState.HIDDEN
-                _errorMessage.value = "Unable to load book. Check your connection."
+                _uiState.value = BookDetailsUiState(
+                    book = null,
+                    errorMessage = "Unable to load book. Check your connection.",
+                    favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
+                )
             }
         }
     }
 
     fun addToFavorites() {
-        viewModelScope.launch {
-            val book = _book.value
-            if (book == null || _favoritesState.value != FavoritesState.NOT_FAVORITE) {
-                return@launch
-            }
+        val book = _uiState.value.book
+        if (
+            book == null ||
+            _uiState.value.favoritesState != BookDetailsUiState.FavoritesState.NOT_FAVORITE
+        ) {
+            return
+        }
 
+        viewModelScope.launch {
             try {
                 database.books().insert(book)
-                _favoritesState.value = FavoritesState.FAVORITE
+                _uiState.update {
+                    it.copy(favoritesState = BookDetailsUiState.FavoritesState.FAVORITE)
+                }
             } catch (_: Exception) {
-                _errorMessage.value = "Failed to add to favorites"
+                _uiState.update {
+                    it.copy(errorMessage = "Failed to add to favorites")
+                }
             }
         }
     }
 
     fun clearErrorMessage() {
-        _errorMessage.value = null
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     fun removeFromFavorites() {
-        viewModelScope.launch {
-            if (_favoritesState.value != FavoritesState.FAVORITE) {
-                return@launch
-            }
+        if (_uiState.value.favoritesState != BookDetailsUiState.FavoritesState.FAVORITE) {
+            return
+        }
 
+        viewModelScope.launch {
             try {
                 database.books().deleteByOpenLibraryKey(openLibraryKey)
-                _favoritesState.value = FavoritesState.NOT_FAVORITE
+                _uiState.update {
+                    it.copy(favoritesState = BookDetailsUiState.FavoritesState.NOT_FAVORITE)
+                }
             } catch (_: Exception) {
-                _errorMessage.value = "Failed to remove from favorites"
+                _uiState.update { it.copy(errorMessage = "Failed to remove from favorites") }
             }
         }
     }

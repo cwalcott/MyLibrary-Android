@@ -14,39 +14,46 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
+data class SearchBookUiState(
+    val books: List<Book>,
+    val errorMessage: String? = null,
+    val searchQuery: String
+)
+
 class SearchBooksViewModel(private val openLibraryApiClient: OpenLibraryApiClient) : ViewModel() {
-    private val _books = MutableStateFlow(emptyList<Book>())
-    val books: StateFlow<List<Book>>
-        get() = _books.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?>
-        get() = _errorMessage.asStateFlow()
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String>
-        get() = _searchQuery.asStateFlow()
+    private val _uiState =
+        MutableStateFlow(SearchBookUiState(books = emptyList(), searchQuery = ""))
+    val uiState: StateFlow<SearchBookUiState>
+        get() = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            searchQuery
+            _uiState
+                .map { it.searchQuery }
+                .distinctUntilChanged()
                 .debounce(500.milliseconds)
-                .collectLatest { _books.value = performSearch(it) }
+                .collectLatest { query ->
+                    _uiState.update { it.copy(books = performSearch(query)) }
+                }
         }
     }
 
     fun retrySearch() {
-        _errorMessage.value = null
+        _uiState.update { it.copy(errorMessage = null) }
+
         viewModelScope.launch {
-            _books.value = performSearch(searchQuery.value)
+            _uiState.update { it.copy(books = performSearch(it.searchQuery)) }
         }
     }
 
     fun updateSearchQuery(searchQuery: String) {
-        _searchQuery.value = searchQuery
+        _uiState.update { it.copy(searchQuery = searchQuery) }
     }
 
     private suspend fun performSearch(query: String): List<Book> {
@@ -57,7 +64,7 @@ class SearchBooksViewModel(private val openLibraryApiClient: OpenLibraryApiClien
         return try {
             openLibraryApiClient.search(query).map { it.asBook() }
         } catch (_: Exception) {
-            _errorMessage.value = "Unable to search. Check your connection."
+            _uiState.update { it.copy(errorMessage = "Unable to search. Check your connection.") }
             emptyList()
         }
     }

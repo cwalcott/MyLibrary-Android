@@ -48,12 +48,10 @@ fun SearchBooksScreen(
     onViewBook: (String) -> Unit,
     viewModel: SearchBooksViewModel = viewModel(factory = SearchBooksViewModel.Factory)
 ) {
-    val books by viewModel.books.collectAsStateWithLifecycle()
-    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     SearchBooksScreen(
-        books = books,
-        errorMessage = errorMessage,
+        state = state,
         onBack = onBack,
         onViewBook = onViewBook,
         onRetrySearchQuery = viewModel::retrySearch,
@@ -63,8 +61,7 @@ fun SearchBooksScreen(
 
 @Composable
 private fun SearchBooksScreen(
-    books: List<Book>,
-    errorMessage: String?,
+    state: SearchBookUiState,
     onBack: () -> Unit,
     onViewBook: (String) -> Unit,
     onRetrySearchQuery: () -> Unit,
@@ -72,7 +69,7 @@ private fun SearchBooksScreen(
 ) {
     @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        if (errorMessage != null) {
+        if (state.errorMessage != null) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -87,7 +84,7 @@ private fun SearchBooksScreen(
                 )
 
                 Text(
-                    text = errorMessage,
+                    text = state.errorMessage,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(8.dp)
                 )
@@ -134,7 +131,7 @@ private fun SearchBooksScreen(
             }
 
             ExpandedFullScreenSearchBar(state = searchBarState, inputField = inputField) {
-                SearchResults(books = books, onBookClick = { onViewBook(it.openLibraryKey) })
+                SearchResults(books = state.books, onBookClick = { onViewBook(it.openLibraryKey) })
             }
         }
     }
@@ -166,8 +163,10 @@ private fun SearchResults(
 fun SearchBooksScreenPreview() {
     MyLibraryTheme {
         SearchBooksScreen(
-            books = listOf(Fixtures.book(), Fixtures.book2()),
-            errorMessage = null,
+            state = SearchBookUiState(
+                books = listOf(Fixtures.book(), Fixtures.book2()),
+                searchQuery = ""
+            ),
             onBack = {},
             onViewBook = {},
             onRetrySearchQuery = {},
@@ -181,8 +180,11 @@ fun SearchBooksScreenPreview() {
 fun SearchBooksScreenErrorPreview() {
     MyLibraryTheme {
         SearchBooksScreen(
-            books = listOf(Fixtures.book(), Fixtures.book2()),
-            errorMessage = "Unable to search. Check your connection.",
+            state = SearchBookUiState(
+                books = listOf(Fixtures.book(), Fixtures.book2()),
+                errorMessage = "Unable to search. Check your connection.",
+                searchQuery = ""
+            ),
             onBack = {},
             onViewBook = {},
             onRetrySearchQuery = {},

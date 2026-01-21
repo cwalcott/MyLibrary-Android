@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cwalcott.mylibrary.R
-import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.model.Fixtures
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 
@@ -39,14 +38,10 @@ fun BookDetailsScreen(
         key = openLibraryKey
     )
 ) {
-    val book by viewModel.book.collectAsStateWithLifecycle()
-    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
-    val favoritesState by viewModel.favoritesState.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     BookDetailsScreen(
-        book = book,
-        errorMessage = errorMessage,
-        favoritesState = favoritesState,
+        state = state,
         onBack = onBack,
         onAddToFavorites = viewModel::addToFavorites,
         onErrorAcknowledged = viewModel::clearErrorMessage,
@@ -56,9 +51,7 @@ fun BookDetailsScreen(
 
 @Composable
 private fun BookDetailsScreen(
-    book: Book?,
-    errorMessage: String?,
-    favoritesState: BookDetailsViewModel.FavoritesState,
+    state: BookDetailsUiState,
     onBack: () -> Unit,
     onAddToFavorites: () -> Unit,
     onErrorAcknowledged: () -> Unit,
@@ -81,10 +74,10 @@ private fun BookDetailsScreen(
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        if (errorMessage != null) {
+        if (state.errorMessage != null) {
             AlertDialog(
                 title = { Text(text = "Error") },
-                text = { Text(text = errorMessage) },
+                text = { Text(text = state.errorMessage) },
                 onDismissRequest = onErrorAcknowledged,
                 confirmButton = {
                     TextButton(onClick = onErrorAcknowledged) {
@@ -94,7 +87,7 @@ private fun BookDetailsScreen(
             )
         }
 
-        if (book != null) {
+        if (state.book != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -106,38 +99,47 @@ private fun BookDetailsScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = book.title,
+                        text = state.book.title,
                         style = MaterialTheme.typography.headlineLarge
                     )
 
-                    if (book.authorNames != null) {
+                    if (state.book.authorNames != null) {
                         Text(
-                            text = book.authorNames,
+                            text = state.book.authorNames,
                             style = MaterialTheme.typography.bodyLarge,
                             fontStyle = FontStyle.Italic
                         )
                     }
                 }
 
-                if (favoritesState != BookDetailsViewModel.FavoritesState.HIDDEN) {
-                    Box(
-                        contentAlignment = Alignment.BottomCenter,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                    ) {
-                        if (favoritesState == BookDetailsViewModel.FavoritesState.FAVORITE) {
+                when (state.favoritesState) {
+                    BookDetailsUiState.FavoritesState.FAVORITE -> {
+                        Box(
+                            contentAlignment = Alignment.BottomCenter,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
+                        ) {
                             Button(onClick = onRemoveFromFavorites) {
                                 Text(text = "Remove from Favorites")
                             }
-                        } else if (favoritesState ==
-                            BookDetailsViewModel.FavoritesState.NOT_FAVORITE
+                        }
+                    }
+
+                    BookDetailsUiState.FavoritesState.NOT_FAVORITE -> {
+                        Box(
+                            contentAlignment = Alignment.BottomCenter,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
                         ) {
                             Button(onClick = onAddToFavorites) {
                                 Text(text = "Add to Favorites")
                             }
                         }
                     }
+
+                    BookDetailsUiState.FavoritesState.HIDDEN -> {}
                 }
             }
         }
@@ -149,9 +151,10 @@ private fun BookDetailsScreen(
 fun BookDetailsScreenPreview() {
     MyLibraryTheme {
         BookDetailsScreen(
-            book = Fixtures.book(),
-            errorMessage = null,
-            favoritesState = BookDetailsViewModel.FavoritesState.FAVORITE,
+            state = BookDetailsUiState(
+                book = Fixtures.book(),
+                favoritesState = BookDetailsUiState.FavoritesState.FAVORITE
+            ),
             onBack = {},
             onAddToFavorites = {},
             onErrorAcknowledged = {},
@@ -165,9 +168,11 @@ fun BookDetailsScreenPreview() {
 fun BookDetailsScreenErrorMessagePreview() {
     MyLibraryTheme {
         BookDetailsScreen(
-            book = Fixtures.book(),
-            errorMessage = "Error while loading book",
-            favoritesState = BookDetailsViewModel.FavoritesState.FAVORITE,
+            state = BookDetailsUiState(
+                book = Fixtures.book(),
+                errorMessage = "Error while loading book",
+                favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
+            ),
             onBack = {},
             onAddToFavorites = {},
             onErrorAcknowledged = {},
