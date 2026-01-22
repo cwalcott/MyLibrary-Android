@@ -25,7 +25,6 @@ MyLibrary is a personal library manager that allows users to search for books us
 ## TODO
 
 - Loading & Empty States
-- Book Covers
 
 ## License
 

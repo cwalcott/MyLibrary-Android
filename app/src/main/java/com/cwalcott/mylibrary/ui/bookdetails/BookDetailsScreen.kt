@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,15 +20,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.cwalcott.mylibrary.R
 import com.cwalcott.mylibrary.model.Fixtures
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
+import com.cwalcott.mylibrary.ui.util.WithAsyncImagePreviewHandler
 
 @Composable
 fun BookDetailsScreen(
@@ -98,6 +103,15 @@ private fun BookDetailsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    AsyncImage(
+                        model = state.book.coverImageUrl,
+                        contentDescription = null,
+                        placeholder = ColorPainter(Color.Gray.copy(alpha = 0.5f)),
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .size(width = 200.dp, height = 300.dp)
+                    )
+
                     Text(
                         text = state.book.title,
                         style = MaterialTheme.typography.headlineLarge
@@ -150,16 +164,18 @@ private fun BookDetailsScreen(
 @Composable
 fun BookDetailsScreenPreview() {
     MyLibraryTheme {
-        BookDetailsScreen(
-            state = BookDetailsUiState(
-                book = Fixtures.book(),
-                favoritesState = BookDetailsUiState.FavoritesState.FAVORITE
-            ),
-            onBack = {},
-            onAddToFavorites = {},
-            onErrorAcknowledged = {},
-            onRemoveFromFavorites = {}
-        )
+        WithAsyncImagePreviewHandler {
+            BookDetailsScreen(
+                state = BookDetailsUiState(
+                    book = Fixtures.book(),
+                    favoritesState = BookDetailsUiState.FavoritesState.FAVORITE
+                ),
+                onBack = {},
+                onAddToFavorites = {},
+                onErrorAcknowledged = {},
+                onRemoveFromFavorites = {}
+            )
+        }
     }
 }
 
@@ -167,16 +183,18 @@ fun BookDetailsScreenPreview() {
 @Composable
 fun BookDetailsScreenErrorMessagePreview() {
     MyLibraryTheme {
-        BookDetailsScreen(
-            state = BookDetailsUiState(
-                book = Fixtures.book(),
-                errorMessage = "Error while loading book",
-                favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
-            ),
-            onBack = {},
-            onAddToFavorites = {},
-            onErrorAcknowledged = {},
-            onRemoveFromFavorites = {}
-        )
+        WithAsyncImagePreviewHandler {
+            BookDetailsScreen(
+                state = BookDetailsUiState(
+                    book = Fixtures.book(),
+                    errorMessage = "Error while loading book",
+                    favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
+                ),
+                onBack = {},
+                onAddToFavorites = {},
+                onErrorAcknowledged = {},
+                onRemoveFromFavorites = {}
+            )
+        }
     }
 }

@@ -36,10 +36,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.cwalcott.mylibrary.R
 import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.model.Fixtures
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
+import com.cwalcott.mylibrary.ui.util.WithAsyncImagePreviewHandler
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -152,6 +154,13 @@ private fun SearchResults(
                         Text(book.authorNames)
                     }
                 },
+                leadingContent = {
+                    AsyncImage(
+                        model = book.coverImageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(50.dp)
+                    )
+                },
                 modifier = Modifier.clickable { onBookClick(book) }
             )
         }
@@ -162,16 +171,18 @@ private fun SearchResults(
 @Composable
 fun SearchBooksScreenPreview() {
     MyLibraryTheme {
-        SearchBooksScreen(
-            state = SearchBookUiState(
-                books = listOf(Fixtures.book(), Fixtures.book2()),
-                searchQuery = ""
-            ),
-            onBack = {},
-            onViewBook = {},
-            onRetrySearchQuery = {},
-            onUpdateSearchQuery = {}
-        )
+        WithAsyncImagePreviewHandler {
+            SearchBooksScreen(
+                state = SearchBookUiState(
+                    books = listOf(Fixtures.book(), Fixtures.book2()),
+                    searchQuery = ""
+                ),
+                onBack = {},
+                onViewBook = {},
+                onRetrySearchQuery = {},
+                onUpdateSearchQuery = {}
+            )
+        }
     }
 }
 

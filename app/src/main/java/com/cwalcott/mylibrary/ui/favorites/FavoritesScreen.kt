@@ -3,6 +3,7 @@ package com.cwalcott.mylibrary.ui.favorites
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,12 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.cwalcott.mylibrary.R
 import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.model.Fixtures
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
+import com.cwalcott.mylibrary.ui.util.WithAsyncImagePreviewHandler
 
 @Composable
 fun FavoritesScreen(
@@ -78,6 +82,13 @@ private fun FavoritesScreen(
                             Text(book.authorNames)
                         }
                     },
+                    leadingContent = {
+                        AsyncImage(
+                            model = book.coverImageUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(50.dp)
+                        )
+                    },
                     colors = ListItemDefaults.colors(containerColor = Color.White),
                     modifier = Modifier.clickable { onViewBook(book.openLibraryKey) }
                 )
@@ -92,6 +103,8 @@ private fun FavoritesScreen(
 @Composable
 fun FavoritesScreenPreview() {
     MyLibraryTheme {
-        FavoritesScreen(books = listOf(Fixtures.book()), onAddBook = {}, onViewBook = {})
+        WithAsyncImagePreviewHandler {
+            FavoritesScreen(books = listOf(Fixtures.book()), onAddBook = {}, onViewBook = {})
+        }
     }
 }
