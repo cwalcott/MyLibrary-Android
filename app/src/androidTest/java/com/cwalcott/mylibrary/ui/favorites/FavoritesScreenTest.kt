@@ -36,12 +36,23 @@ class FavoritesScreenTest {
         database.reset()
     }
 
-    @Test fun rendersBooks() {
+    @Test fun rendersFavorites() {
         with(composeTestRule) {
             setContent()
 
+            onNodeWithText("No Favorites Yet").assertDoesNotExist()
             onNodeWithText("Test Book 1").assertIsDisplayed()
             onNodeWithText("Test Book 2").assertIsDisplayed()
+        }
+    }
+
+    @Test fun rendersNoFavorites() {
+        database.reset()
+
+        with(composeTestRule) {
+            setContent()
+
+            onNodeWithText("No Favorites Yet").assertIsDisplayed()
         }
     }
 

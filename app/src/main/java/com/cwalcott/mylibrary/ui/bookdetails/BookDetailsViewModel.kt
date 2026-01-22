@@ -1,5 +1,6 @@
 package com.cwalcott.mylibrary.ui.bookdetails
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 data class BookDetailsUiState(
     val book: Book?,
@@ -45,7 +48,7 @@ class BookDetailsViewModel(
         viewModelScope.launch {
             val localBook = try {
                 database.books().findByOpenLibraryKey(openLibraryKey)
-            } catch (_: Exception) {
+            } catch (_: SQLiteException) {
                 null
             }
 
@@ -71,7 +74,13 @@ class BookDetailsViewModel(
                         favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
                     )
                 }
-            } catch (_: Exception) {
+            } catch (_: HttpException) {
+                _uiState.value = BookDetailsUiState(
+                    book = null,
+                    errorMessage = "Unable to load book. Check your connection.",
+                    favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
+                )
+            } catch (_: IOException) {
                 _uiState.value = BookDetailsUiState(
                     book = null,
                     errorMessage = "Unable to load book. Check your connection.",
@@ -96,7 +105,7 @@ class BookDetailsViewModel(
                 _uiState.update {
                     it.copy(favoritesState = BookDetailsUiState.FavoritesState.FAVORITE)
                 }
-            } catch (_: Exception) {
+            } catch (_: SQLiteException) {
                 _uiState.update {
                     it.copy(errorMessage = "Failed to add to favorites")
                 }
@@ -119,7 +128,7 @@ class BookDetailsViewModel(
                 _uiState.update {
                     it.copy(favoritesState = BookDetailsUiState.FavoritesState.NOT_FAVORITE)
                 }
-            } catch (_: Exception) {
+            } catch (_: SQLiteException) {
                 _uiState.update { it.copy(errorMessage = "Failed to remove from favorites") }
             }
         }

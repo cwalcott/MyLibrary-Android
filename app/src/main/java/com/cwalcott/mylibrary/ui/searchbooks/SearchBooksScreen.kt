@@ -1,8 +1,7 @@
 package com.cwalcott.mylibrary.ui.searchbooks
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +16,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
@@ -28,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -40,6 +37,7 @@ import coil3.compose.AsyncImage
 import com.cwalcott.mylibrary.R
 import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.model.Fixtures
+import com.cwalcott.mylibrary.ui.shared.ContentUnavailableView
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 import com.cwalcott.mylibrary.ui.util.WithAsyncImagePreviewHandler
 import kotlinx.coroutines.flow.collectLatest
@@ -61,6 +59,7 @@ fun SearchBooksScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchBooksScreen(
     state: SearchBookUiState,
@@ -69,32 +68,20 @@ private fun SearchBooksScreen(
     onRetrySearchQuery: () -> Unit,
     onUpdateSearchQuery: (String) -> Unit
 ) {
-    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        if (state.errorMessage != null) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+        if (state.results is SearchBookUiState.ResultsState.NetworkError) {
+            ContentUnavailableView(
+                iconPainter = painterResource(id = R.drawable.warning),
+                subheadlineText = "Unable to search. Check your connection.",
+                bottomContent = {
+                    Button(onClick = onRetrySearchQuery) {
+                        Text("Retry")
+                    }
+                },
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.warning),
-                    contentDescription = "Warning",
-                    modifier = Modifier.padding(8.dp).size(48.dp)
-                )
-
-                Text(
-                    text = state.errorMessage,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(8.dp)
-                )
-
-                Button(onClick = onRetrySearchQuery) {
-                    Text("Retry")
-                }
-            }
+            )
         } else {
             val searchBarState = rememberSearchBarState(initialValue = SearchBarValue.Expanded)
 
@@ -133,7 +120,28 @@ private fun SearchBooksScreen(
             }
 
             ExpandedFullScreenSearchBar(state = searchBarState, inputField = inputField) {
-                SearchResults(books = state.books, onBookClick = { onViewBook(it.openLibraryKey) })
+                when (state.results) {
+                    SearchBookUiState.ResultsState.Empty -> {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                        }
+                    }
+
+                    SearchBookUiState.ResultsState.NoResults -> {
+                        ContentUnavailableView(
+                            iconPainter = painterResource(R.drawable.search),
+                            headlineText = "No Results Found",
+                            subheadlineText = "Check the spelling or try a new search.",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    is SearchBookUiState.ResultsState.Results -> {
+                        SearchResults(
+                            books = state.results.books,
+                            onBookClick = { onViewBook(it.openLibraryKey) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -174,8 +182,48 @@ fun SearchBooksScreenPreview() {
         WithAsyncImagePreviewHandler {
             SearchBooksScreen(
                 state = SearchBookUiState(
-                    books = listOf(Fixtures.book(), Fixtures.book2()),
-                    searchQuery = ""
+                    query = "",
+                    results = SearchBookUiState.ResultsState.Results(
+                        books = listOf(Fixtures.book(), Fixtures.book2())
+                    )
+                ),
+                onBack = {},
+                onViewBook = {},
+                onRetrySearchQuery = {},
+                onUpdateSearchQuery = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SearchBooksScreenNoResultsFoundPreview() {
+    MyLibraryTheme {
+        WithAsyncImagePreviewHandler {
+            SearchBooksScreen(
+                state = SearchBookUiState(
+                    query = "",
+                    results = SearchBookUiState.ResultsState.NoResults
+                ),
+                onBack = {},
+                onViewBook = {},
+                onRetrySearchQuery = {},
+                onUpdateSearchQuery = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SearchBooksScreenEmptyPreview() {
+    MyLibraryTheme {
+        WithAsyncImagePreviewHandler {
+            SearchBooksScreen(
+                state = SearchBookUiState(
+                    query = "",
+                    results = SearchBookUiState.ResultsState.Empty
                 ),
                 onBack = {},
                 onViewBook = {},
@@ -192,9 +240,8 @@ fun SearchBooksScreenErrorPreview() {
     MyLibraryTheme {
         SearchBooksScreen(
             state = SearchBookUiState(
-                books = listOf(Fixtures.book(), Fixtures.book2()),
-                errorMessage = "Unable to search. Check your connection.",
-                searchQuery = ""
+                query = "",
+                results = SearchBookUiState.ResultsState.NetworkError
             ),
             onBack = {},
             onViewBook = {},

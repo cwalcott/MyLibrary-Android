@@ -28,6 +28,7 @@ import coil3.compose.AsyncImage
 import com.cwalcott.mylibrary.R
 import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.model.Fixtures
+import com.cwalcott.mylibrary.ui.shared.ContentUnavailableView
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 import com.cwalcott.mylibrary.ui.util.WithAsyncImagePreviewHandler
 
@@ -67,33 +68,44 @@ private fun FavoritesScreen(
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            items(items = books, key = { it.uuid }) { book ->
-                HorizontalDivider()
+        if (books.isEmpty()) {
+            ContentUnavailableView(
+                iconPainter = painterResource(id = R.drawable.star),
+                headlineText = "No Favorites Yet",
+                subheadlineText = "Tap + to search and add books to your favorites",
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                items(items = books, key = { it.uuid }) { book ->
+                    HorizontalDivider()
 
-                ListItem(
-                    headlineContent = { Text(book.title) },
-                    supportingContent = {
-                        if (book.authorNames != null) {
-                            Text(book.authorNames)
-                        }
-                    },
-                    leadingContent = {
-                        AsyncImage(
-                            model = book.coverImageUrl,
-                            contentDescription = null,
-                            modifier = Modifier.size(50.dp)
-                        )
-                    },
-                    colors = ListItemDefaults.colors(containerColor = Color.White),
-                    modifier = Modifier.clickable { onViewBook(book.openLibraryKey) }
-                )
+                    ListItem(
+                        headlineContent = { Text(book.title) },
+                        supportingContent = {
+                            if (book.authorNames != null) {
+                                Text(book.authorNames)
+                            }
+                        },
+                        leadingContent = {
+                            AsyncImage(
+                                model = book.coverImageUrl,
+                                contentDescription = null,
+                                modifier = Modifier.size(50.dp)
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.White),
+                        modifier = Modifier.clickable { onViewBook(book.openLibraryKey) }
+                    )
 
-                HorizontalDivider()
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -105,6 +117,16 @@ fun FavoritesScreenPreview() {
     MyLibraryTheme {
         WithAsyncImagePreviewHandler {
             FavoritesScreen(books = listOf(Fixtures.book()), onAddBook = {}, onViewBook = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun FavoritesScreenEmptyPreview() {
+    MyLibraryTheme {
+        WithAsyncImagePreviewHandler {
+            FavoritesScreen(books = emptyList(), onAddBook = {}, onViewBook = {})
         }
     }
 }

@@ -22,10 +22,6 @@ MyLibrary is a personal library manager that allows users to search for books us
 - **Offline Support**: Favorites stored in local Room database
 - **Real-time Updates**: Reactive UI updates using Kotlin Flows
 
-## TODO
-
-- Loading & Empty States
-
 ## License
 
 This is sample code for portfolio purposes.

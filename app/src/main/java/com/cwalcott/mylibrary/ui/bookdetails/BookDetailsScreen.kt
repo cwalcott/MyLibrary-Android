@@ -1,5 +1,6 @@
 package com.cwalcott.mylibrary.ui.bookdetails
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.res.painterResource
@@ -30,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.cwalcott.mylibrary.R
+import com.cwalcott.mylibrary.model.Book
 import com.cwalcott.mylibrary.model.Fixtures
 import com.cwalcott.mylibrary.ui.theme.MyLibraryTheme
 import com.cwalcott.mylibrary.ui.util.WithAsyncImagePreviewHandler
@@ -93,72 +96,127 @@ private fun BookDetailsScreen(
         }
 
         if (state.book != null) {
-            Box(
+            BookContent(
+                book = state.book,
+                favoritesState = state.favoritesState,
+                onAddToFavorites = onAddToFavorites,
+                onRemoveFromFavorites = onRemoveFromFavorites,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    AsyncImage(
-                        model = state.book.coverImageUrl,
-                        contentDescription = null,
-                        placeholder = ColorPainter(Color.Gray.copy(alpha = 0.5f)),
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .size(width = 200.dp, height = 300.dp)
-                    )
-
-                    Text(
-                        text = state.book.title,
-                        style = MaterialTheme.typography.headlineLarge
-                    )
-
-                    if (state.book.authorNames != null) {
-                        Text(
-                            text = state.book.authorNames,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontStyle = FontStyle.Italic
-                        )
-                    }
-                }
-
-                when (state.favoritesState) {
-                    BookDetailsUiState.FavoritesState.FAVORITE -> {
-                        Box(
-                            contentAlignment = Alignment.BottomCenter,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp)
-                        ) {
-                            Button(onClick = onRemoveFromFavorites) {
-                                Text(text = "Remove from Favorites")
-                            }
-                        }
-                    }
-
-                    BookDetailsUiState.FavoritesState.NOT_FAVORITE -> {
-                        Box(
-                            contentAlignment = Alignment.BottomCenter,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp)
-                        ) {
-                            Button(onClick = onAddToFavorites) {
-                                Text(text = "Add to Favorites")
-                            }
-                        }
-                    }
-
-                    BookDetailsUiState.FavoritesState.HIDDEN -> {}
-                }
-            }
+            )
+        } else {
+            BookContentLoading()
         }
     }
 }
+
+@Composable
+private fun BookContent(
+    book: Book,
+    favoritesState: BookDetailsUiState.FavoritesState,
+    onAddToFavorites: () -> Unit,
+    onRemoveFromFavorites: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            AsyncImage(
+                model = book.coverImageUrl,
+                contentDescription = null,
+                placeholder = ColorPainter(Color.Gray.copy(alpha = 0.5f)),
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .size(width = 200.dp, height = 300.dp)
+            )
+
+            Text(
+                text = book.title,
+                style = MaterialTheme.typography.headlineLarge
+            )
+
+            if (book.authorNames != null) {
+                Text(
+                    text = book.authorNames,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontStyle = FontStyle.Italic
+                )
+            }
+        }
+
+        when (favoritesState) {
+            BookDetailsUiState.FavoritesState.FAVORITE -> {
+                Box(
+                    contentAlignment = Alignment.BottomCenter,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                ) {
+                    Button(onClick = onRemoveFromFavorites) {
+                        Text(text = "Remove from Favorites")
+                    }
+                }
+            }
+
+            BookDetailsUiState.FavoritesState.NOT_FAVORITE -> {
+                Box(
+                    contentAlignment = Alignment.BottomCenter,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                ) {
+                    Button(onClick = onAddToFavorites) {
+                        Text(text = "Add to Favorites")
+                    }
+                }
+            }
+
+            BookDetailsUiState.FavoritesState.HIDDEN -> {}
+        }
+    }
+}
+
+@Composable
+private fun BookContentLoading(modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .size(width = 200.dp, height = 300.dp)
+                    .background(color = Color.LightGray)
+            )
+
+            Text(
+                text = "Loading Title",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.placeholder()
+            )
+
+            Text(
+                text = "Loading Book Authors",
+                style = MaterialTheme.typography.bodyLarge,
+                fontStyle = FontStyle.Italic,
+                modifier = Modifier.placeholder()
+            )
+        }
+    }
+}
+
+private fun Modifier.placeholder(color: Color = Color.LightGray): Modifier = then(
+    Modifier.drawWithContent {
+        drawContent()
+        drawRect(color = color)
+    }
+)
 
 @Preview(showBackground = true)
 @Composable
@@ -188,6 +246,25 @@ fun BookDetailsScreenErrorMessagePreview() {
                 state = BookDetailsUiState(
                     book = Fixtures.book(),
                     errorMessage = "Error while loading book",
+                    favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
+                ),
+                onBack = {},
+                onAddToFavorites = {},
+                onErrorAcknowledged = {},
+                onRemoveFromFavorites = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BookDetailsScreenLoadingPreview() {
+    MyLibraryTheme {
+        WithAsyncImagePreviewHandler {
+            BookDetailsScreen(
+                state = BookDetailsUiState(
+                    book = null,
                     favoritesState = BookDetailsUiState.FavoritesState.HIDDEN
                 ),
                 onBack = {},

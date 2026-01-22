@@ -14,58 +14,73 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 import kotlin.time.Duration.Companion.milliseconds
 
-data class SearchBookUiState(
-    val books: List<Book>,
-    val errorMessage: String? = null,
-    val searchQuery: String
-)
+data class SearchBookUiState(val query: String, val results: ResultsState) {
+    sealed interface ResultsState {
+        data object Empty : ResultsState
+
+        data object NetworkError : ResultsState
+
+        data class Results(val books: List<Book>) : ResultsState
+
+        data object NoResults : ResultsState
+    }
+}
 
 class SearchBooksViewModel(private val openLibraryApiClient: OpenLibraryApiClient) : ViewModel() {
-    private val _uiState =
-        MutableStateFlow(SearchBookUiState(books = emptyList(), searchQuery = ""))
-    val uiState: StateFlow<SearchBookUiState>
-        get() = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(
+        SearchBookUiState(
+            query = "",
+            results = SearchBookUiState.ResultsState.Empty
+        )
+    )
+    val uiState: StateFlow<SearchBookUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             _uiState
-                .map { it.searchQuery }
-                .distinctUntilChanged()
+                .distinctUntilChangedBy { it.query }
                 .debounce(500.milliseconds)
-                .collectLatest { query ->
-                    _uiState.update { it.copy(books = performSearch(query)) }
+                .collectLatest {
+                    _uiState.update { uiState ->
+                        uiState.copy(results = performSearch(uiState.query))
+                    }
                 }
         }
     }
 
     fun retrySearch() {
-        _uiState.update { it.copy(errorMessage = null) }
-
         viewModelScope.launch {
-            _uiState.update { it.copy(books = performSearch(it.searchQuery)) }
+            _uiState.update { it.copy(results = performSearch(it.query)) }
         }
     }
 
-    fun updateSearchQuery(searchQuery: String) {
-        _uiState.update { it.copy(searchQuery = searchQuery) }
+    fun updateSearchQuery(query: String) {
+        _uiState.update { it.copy(query = query) }
     }
 
-    private suspend fun performSearch(query: String): List<Book> {
+    private suspend fun performSearch(query: String): SearchBookUiState.ResultsState {
         if (query.length < 3) {
-            return emptyList()
+            return SearchBookUiState.ResultsState.Empty
         }
 
         return try {
-            openLibraryApiClient.search(query).map { it.asBook() }
-        } catch (_: Exception) {
-            _uiState.update { it.copy(errorMessage = "Unable to search. Check your connection.") }
-            emptyList()
+            val books = openLibraryApiClient.search(query).map { it.asBook() }
+            if (books.isEmpty()) {
+                SearchBookUiState.ResultsState.NoResults
+            } else {
+                SearchBookUiState.ResultsState.Results(books = books)
+            }
+        } catch (_: HttpException) {
+            SearchBookUiState.ResultsState.NetworkError
+        } catch (_: IOException) {
+            SearchBookUiState.ResultsState.NetworkError
         }
     }
 

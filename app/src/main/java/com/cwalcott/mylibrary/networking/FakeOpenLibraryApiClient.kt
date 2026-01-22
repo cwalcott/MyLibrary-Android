@@ -1,6 +1,6 @@
 package com.cwalcott.mylibrary.networking
 
-import okio.IOException
+import java.io.IOException
 
 class FakeOpenLibraryApiClient(private val books: List<OpenLibraryBook> = mockBooks) :
     OpenLibraryApiClient {
